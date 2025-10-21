@@ -1,13 +1,25 @@
 import { ExtensionMessage, ExtensionResponse, UserSettings } from '../types';
 
-// 侧边栏状态管理
-let sidebarStatus: { [tabId: number]: boolean } = {};
+// 全局侧边栏状态管理 - 简化为单一状态
+let globalSidebarOpen: boolean = false;
 
-// 定时检查侧边栏状态的间隔ID
-let statusCheckInterval: number | null = null;
-
-// 状态锁定机制，防止面板展开期间悬浮按钮重新出现
-let sidebarLocked: { [tabId: number]: boolean } = {};
+// 从存储中恢复全局侧边栏状态
+const restoreGlobalSidebarState = async (): Promise<void> => {
+  try {
+    const result = await chrome.storage.local.get(['globalSidebarOpen']);
+    if (result.globalSidebarOpen !== undefined) {
+      globalSidebarOpen = result.globalSidebarOpen;
+      console.log(`[Background] 恢复全局侧边栏状态: ${globalSidebarOpen}`);
+    } else {
+      console.log('[Background] 未找到存储的侧边栏状态，使用默认值: false');
+      globalSidebarOpen = false;
+      await chrome.storage.local.set({ globalSidebarOpen: false });
+    }
+  } catch (error) {
+    console.error('[Background] 恢复侧边栏状态失败:', error);
+    globalSidebarOpen = false;
+  }
+};
 
 // 初始化用户设置
 const initializeSettings = async (): Promise<void> => {
@@ -35,28 +47,47 @@ const initializeSettings = async (): Promise<void> => {
 // 处理来自content script和popup的消息
 chrome.runtime.onMessage.addListener(
   (message: ExtensionMessage, sender, sendResponse: (response: ExtensionResponse) => void) => {
-    console.log('Background received message:', message);
-
+    console.log(`[Background] 收到消息:`, message, `来自标签页:`, sender.tab?.id);
+    
     switch (message.action) {
       case 'updateSettings':
+        console.log('[Background] 处理 updateSettings 消息');
         handleUpdateSettings(message.data, sendResponse);
         return true; // 保持消息端口开放用于异步响应
       case 'getSettings':
+        console.log('[Background] 处理 getSettings 消息');
         handleGetSettings(sendResponse);
         return true; // 保持消息端口开放用于异步响应
       case 'openSidebar':
+        console.log('[Background] 处理 openSidebar 消息');
         handleOpenSidebar(sender.tab?.id, sendResponse);
         return true;
       case 'getSidebarStatus':
+        console.log('[Background] 处理 getSidebarStatus 消息');
         handleGetSidebarStatus(sender.tab?.id, sendResponse);
         return true;
+      case 'sidebarOpened':
+        console.log(`[Background] *** 收到 sidebarOpened 消息，标签页 ${sender.tab?.id} ***`);
+        handleSidebarOpened(sender.tab?.id, sendResponse);
+        return true;
+      case 'sidebarClosed':
+        console.log(`[Background] *** 收到 sidebarClosed 消息，标签页 ${sender.tab?.id} ***`);
+        handleSidebarClosed(sender.tab?.id, sendResponse);
+        return true;
+      case 'closeSidebar':
+        console.log(`[Background] *** 收到 closeSidebar 消息，标签页 ${sender.tab?.id} ***`);
+        handleSidebarClosed(sender.tab?.id, sendResponse);
+        return true;
       case 'refreshCache':
+        console.log('[Background] 处理 refreshCache 消息');
         handleRefreshCache(sendResponse);
         return true;
       case 'clearCache':
+        console.log('[Background] 处理 clearCache 消息');
         handleClearCache(sendResponse);
         return true;
       default:
+        console.log(`[Background] 未知消息类型: ${message.action}`);
         sendResponse({ success: false, error: 'Unknown action' });
         return false;
     }
@@ -142,19 +173,19 @@ const handleClearCache = async (sendResponse: (response: ExtensionResponse) => v
 };
 
 // 获取侧边栏状态
-const handleGetSidebarStatus = async (tabId: number | undefined, sendResponse: (response: ExtensionResponse) => void) => {
+const handleGetSidebarStatus = async (_tabId: number | undefined, sendResponse: (response: ExtensionResponse) => void) => {
   try {
-    if (tabId) {
-      const isOpen = sidebarStatus[tabId] || false;
-      sendResponse({ 
-        success: true, 
-        data: { isOpen } 
-      });
-    } else {
-      sendResponse({ success: false, error: 'No active tab' });
-    }
+    console.log(`[Background] *** 获取全局侧边栏状态 ***`);
+    console.log(`[Background] 全局侧边栏状态: ${globalSidebarOpen}`);
+    
+    sendResponse({ 
+      success: true, 
+      data: { 
+        isOpen: globalSidebarOpen
+      } 
+    });
   } catch (error) {
-    console.error('Error getting sidebar status:', error);
+    console.error('[Background] ❌ 获取侧边栏状态时出错:', error);
     sendResponse({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 
@@ -162,37 +193,96 @@ const handleGetSidebarStatus = async (tabId: number | undefined, sendResponse: (
   }
 };
 
-// 打开侧边栏
+// 处理侧边栏打开消息
+const handleSidebarOpened = async (_tabId: number | undefined, sendResponse: (response: ExtensionResponse) => void) => {
+  try {
+    console.log(`[Background] *** 侧边栏已打开，更新全局状态 ***`);
+    
+    // 更新全局侧边栏状态
+    globalSidebarOpen = true;
+    console.log(`[Background] 全局侧边栏状态更新为: ${globalSidebarOpen}`);
+    
+    // 持久化状态到存储
+    await chrome.storage.local.set({ globalSidebarOpen: true });
+    console.log(`[Background] 侧边栏状态已保存到存储`);
+    
+    // 向所有标签页发送隐藏悬浮按钮的消息
+    console.log(`[Background] 向所有标签页发送 hideFloatingButton 消息`);
+    const tabs = await chrome.tabs.query({});
+    const validTabs = tabs.filter(tab => tab.id && tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('chrome-extension://'));
+    console.log(`[Background] 找到 ${validTabs.length} 个有效标签页`);
+    
+    const promises = validTabs.map(tab => {
+      if (tab.id) {
+        return chrome.tabs.sendMessage(tab.id, {
+          action: 'hideFloatingButton'
+        }).catch((error) => {
+          console.log(`[Background] 标签页 ${tab.id} (${tab.url}) 发送消息失败:`, error.message);
+        });
+      }
+    });
+    
+    await Promise.allSettled(promises);
+    console.log(`[Background] ✅ 侧边栏打开处理完成`);
+    sendResponse({ success: true });
+  } catch (error) {
+    console.error('[Background] ❌ 处理 sidebarOpened 时出错:', error);
+    sendResponse({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+};
+
+// 处理侧边栏关闭消息
+const handleSidebarClosed = async (_tabId: number | undefined, sendResponse: (response: ExtensionResponse) => void) => {
+  try {
+    console.log(`[Background] *** 侧边栏已关闭，更新全局状态 ***`);
+    
+    // 更新全局侧边栏状态
+    globalSidebarOpen = false;
+    console.log(`[Background] 全局侧边栏状态更新为: ${globalSidebarOpen}`);
+    
+    // 持久化状态到存储
+    await chrome.storage.local.set({ globalSidebarOpen: false });
+    console.log(`[Background] 侧边栏状态已保存到存储`);
+    
+    // 向所有标签页发送显示悬浮按钮的消息
+    console.log(`[Background] 向所有标签页发送 showFloatingButton 消息`);
+    const tabs = await chrome.tabs.query({});
+    const validTabs = tabs.filter(tab => tab.id && tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('chrome-extension://'));
+    console.log(`[Background] 找到 ${validTabs.length} 个有效标签页`);
+    
+    const promises = validTabs.map(tab => {
+      if (tab.id) {
+        return chrome.tabs.sendMessage(tab.id, {
+          action: 'showFloatingButton'
+        }).catch((error) => {
+          console.log(`[Background] 标签页 ${tab.id} (${tab.url}) 发送消息失败:`, error.message);
+        });
+      }
+    });
+    
+    await Promise.allSettled(promises);
+    console.log(`[Background] ✅ 侧边栏关闭处理完成`);
+    sendResponse({ success: true });
+  } catch (error) {
+    console.error('[Background] ❌ 处理 sidebarClosed 时出错:', error);
+    sendResponse({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+};
+
 const handleOpenSidebar = async (tabId: number | undefined, sendResponse: (response: ExtensionResponse) => void) => {
   try {
     if (tabId) {
       console.log(`[Background] Opening sidebar for tab ${tabId}`);
       await chrome.sidePanel.open({ tabId });
       
-      // 立即锁定状态，防止定时检查干扰
-      sidebarLocked[tabId] = true;
-      
-      // 更新侧边栏状态
-      sidebarStatus[tabId] = true;
-      console.log(`[Background] Sidebar status set to true and locked for tab ${tabId}`);
-      
-      // 立即通知content script隐藏悬浮按钮
-      chrome.tabs.sendMessage(tabId, {
-        action: 'hideFloatingButton'
-      }).catch(() => {
-        console.log(`[Background] Failed to send hideFloatingButton to tab ${tabId}`);
-      });
-      
-      // 启动监控（如果还没有启动）
-      if (!statusCheckInterval) {
-        startSidebarStatusMonitoring();
-      }
-      
-      // 延迟解锁，给侧边栏足够时间完全打开
-      setTimeout(() => {
-        sidebarLocked[tabId] = false;
-        console.log(`[Background] Sidebar unlocked for tab ${tabId}`);
-      }, 3000); // 3秒后解锁
+      // 注意：不再在这里设置状态，等待侧边栏页面发送sidebarOpened消息
+      console.log(`[Background] Sidebar open request sent for tab ${tabId}`);
       
       sendResponse({ success: true });
     } else {
@@ -217,160 +307,82 @@ chrome.action.onClicked.addListener(async (tab) => {
 
     console.log(`[Background] Action clicked for tab ${tab.id}`);
     
-    // 立即锁定状态，防止定时检查干扰
-    sidebarLocked[tab.id] = true;
-    
     // 尝试打开侧边栏
     await chrome.sidePanel.open({ 
       tabId: tab.id,
       windowId: tab.windowId 
     });
     
-    // 更新侧边栏状态
-    sidebarStatus[tab.id] = true;
-    console.log(`[Background] Sidebar status set to true and locked for tab ${tab.id} (action click)`);
-    
-    // 立即通知content script隐藏悬浮按钮
-    chrome.tabs.sendMessage(tab.id, {
-      action: 'hideFloatingButton'
-    }).catch(() => {
-      console.log(`[Background] Failed to send hideFloatingButton to tab ${tab.id} (action click)`);
-    });
-    
-    // 启动监控（如果还没有启动）
-    if (!statusCheckInterval) {
-      startSidebarStatusMonitoring();
-    }
-    
-    // 延迟解锁，给侧边栏足够时间完全打开
-    setTimeout(() => {
-      if (tab.id) {
-        sidebarLocked[tab.id] = false;
-        console.log(`[Background] Sidebar unlocked for tab ${tab.id} (action click)`);
-      }
-    }, 3000); // 3秒后解锁
+    // 注意：不再在这里设置状态，等待侧边栏页面发送sidebarOpened消息
+    console.log(`[Background] Sidebar open request sent for tab ${tab.id} (action click)`);
   } catch (error) {
     console.error('[Background] Error handling action click:', error);
   }
 });
 
 // 插件安装时初始化
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
   console.log('[Background] Linksurge: Email Finder installed');
-  initializeSettings();
+  
+  // 插件安装时强制设置侧边栏状态为false
+  globalSidebarOpen = false;
+  await chrome.storage.local.set({ globalSidebarOpen: false });
+  console.log('[Background] 插件安装时设置侧边栏状态为: false');
+  
+  // 初始化设置
+  await initializeSettings();
   
   // 启动侧边栏状态监控
   startSidebarStatusMonitoring();
 });
 
-// 监听标签页关闭事件，清理侧边栏状态
+// 监听标签页关闭事件（现在不需要清理状态，因为使用全局状态）
 chrome.tabs.onRemoved.addListener((tabId) => {
-  delete sidebarStatus[tabId];
-  delete sidebarLocked[tabId];
+  console.log(`[Background] 标签页 ${tabId} 已关闭`);
+  // 不再需要清理基于标签页的状态，因为现在使用全局状态
 });
 
-// 检查单个标签页的侧边栏状态
-const checkSidebarStatusForTab = async (tabId: number) => {
-  try {
-    // 如果侧边栏被锁定，跳过检查
-    if (sidebarLocked[tabId]) {
-      console.log(`[Background] Sidebar locked for tab ${tabId}, skipping status check`);
-      return;
-    }
-    
-    console.log(`[Background] Checking sidebar status for tab ${tabId}`);
-    
-    // 尝试获取当前活动标签页
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    const activeTab = tabs.find(tab => tab.id === tabId);
-    
-    if (!activeTab) {
-      console.log(`[Background] Tab ${tabId} is not active or not found`);
-      return;
-    }
+// 检查单个标签页的侧边栏状态（已废弃，现在使用直接通信）
+// 这个函数已经不再需要，因为我们现在使用侧边栏页面的直接通信
+// 保留函数定义以避免破坏现有的调用，但不执行任何操作
+// const checkSidebarStatusForTab = async (tabId: number) => {
+//   console.log(`[Background] checkSidebarStatusForTab called for tab ${tabId} - using direct communication instead`);
+// };
 
-    // 通过与 content script 通讯，判断悬浮按钮是否可见
-    try {
-      await chrome.tabs.sendMessage(tabId, { action: 'ping' });
-
-      if (sidebarStatus[tabId]) {
-        setTimeout(async () => {
-          if (sidebarLocked[tabId]) {
-            console.log(`[Background] Sidebar still locked for tab ${tabId}, skipping delayed check`);
-            return;
-          }
-
-          try {
-            const response = await chrome.tabs.sendMessage(tabId, { action: 'getSidebarVisibility' });
-            const visible = !!response?.data?.floatingButtonVisible;
-
-            if (!visible) {
-              console.log(`[Background] Sidebar likely closed for tab ${tabId}, ensuring floating button shows`);
-              sidebarStatus[tabId] = false;
-              chrome.tabs.sendMessage(tabId, { action: 'showFloatingButton' }).catch(() => {
-                console.log(`[Background] Failed to send showFloatingButton to tab ${tabId}`);
-              });
-            } else {
-              console.log(`[Background] Floating button is visible for tab ${tabId}, panel considered closed`);
-              sidebarStatus[tabId] = false;
-            }
-          } catch (error) {
-            console.log(`[Background] Content script not responding for tab ${tabId}, assuming sidebar closed`);
-            sidebarStatus[tabId] = false;
-            chrome.tabs.sendMessage(tabId, { action: 'showFloatingButton' }).catch(() => {
-              console.log(`[Background] Failed to send showFloatingButton to tab ${tabId}`);
-            });
-          }
-        }, 800);
-      }
-    } catch (error) {
-      console.log(`[Background] Content script not available for tab ${tabId}`);
-    }
-  } catch (error) {
-    console.error(`[Background] Error checking sidebar status for tab ${tabId}:`, error);
-  }
-};
-
-// 定期检查所有标签页的侧边栏状态
+// 启动侧边栏状态监控（已简化，现在主要依赖直接通信）
 const startSidebarStatusMonitoring = () => {
-  if (statusCheckInterval) {
-    clearInterval(statusCheckInterval);
-  }
-  
-  statusCheckInterval = setInterval(async () => {
-    try {
-      // 获取所有标签页
-      const tabs = await chrome.tabs.query({});
-      
-      for (const tab of tabs) {
-        if (tab.id && sidebarStatus[tab.id]) {
-          await checkSidebarStatusForTab(tab.id);
-        }
-      }
-    } catch (error) {
-      console.error('[Background] Error in sidebar status monitoring:', error);
-    }
-  }, 2000); // 每2秒检查一次
+  // 现在主要依赖侧边栏页面的直接通信，不再需要复杂的定时检查
+  // 保留函数以避免破坏现有调用
+  console.log('[Background] Sidebar status monitoring initialized - using direct communication');
 };
 
 // 监听标签页更新事件
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
-  if (changeInfo.status === 'complete') {
-    console.log(`[Background] Tab ${tabId} completed loading`);
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('chrome-extension://')) {
+    console.log(`[Background] Tab ${tabId} completed loading: ${tab.url}`);
     
-    // 如果侧边栏状态显示为打开，检查是否真的打开
-    if (sidebarStatus[tabId]) {
+    // 如果全局侧边栏状态为打开，向新加载的标签页发送隐藏悬浮按钮消息
+    if (globalSidebarOpen) {
       setTimeout(() => {
-        checkSidebarStatusForTab(tabId);
+        chrome.tabs.sendMessage(tabId, {
+          action: 'hideFloatingButton'
+        }).catch((error) => {
+          console.log(`[Background] 标签页 ${tabId} (${tab.url}) 发送隐藏悬浮按钮消息失败:`, error.message);
+        });
       }, 500);
     }
   }
 });
 
 // 插件启动时初始化设置
-chrome.runtime.onStartup.addListener(() => {
+chrome.runtime.onStartup.addListener(async () => {
   console.log('[Background] Extension startup');
-  initializeSettings();
+  
+  // 恢复全局侧边栏状态
+  await restoreGlobalSidebarState();
+  
+  // 初始化设置
+  await initializeSettings();
   
   // 启动侧边栏状态监控
   startSidebarStatusMonitoring();
