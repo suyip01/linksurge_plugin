@@ -23,6 +23,6 @@
     /* Chrome Extension Types */
     "types": ["chrome"]
   },
-  "include": ["src"],
+  "include": ["src", "SidebarApp bak.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
