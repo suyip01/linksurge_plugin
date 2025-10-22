@@ -114,23 +114,25 @@ const SidebarApp: React.FC = () => {
     options, 
     onSelect, 
     isOpen, 
-    className = "" 
+    className = "", 
+    maxHeight = "max-h-40"
   }: { 
     options: string[]; 
     onSelect: (option: string) => void; 
     isOpen: boolean; 
     className?: string; 
+    maxHeight?: string;
   }) => {
     if (!isOpen) return null;
     
     return (
       <div className={`absolute top-full left-0 right-0 mt-2 z-10 ${className}`}>
         <div className={`
-          bg-white/95 backdrop-blur-sm border border-gray-100 rounded-3xl shadow-3xl max-h-96 overflow-hidden
+          bg-white/95 backdrop-blur-sm border border-gray-100 rounded-3xl shadow-3xl overflow-hidden
           transform transition-all duration-300 ease-out origin-top
           opacity-100 scale-100 translate-y-0
         `}>
-          <div className="overflow-y-auto max-h-96 scrollbar-hide">
+          <div className={`overflow-y-auto ${maxHeight} scrollbar-hide`}>
             {options.map((option, index) => (
               <button
                 key={index}
@@ -148,7 +150,7 @@ const SidebarApp: React.FC = () => {
                 }}
               >
                 <div className={`
-                  px-5 py-1 mx-2 my-0.5 rounded-lg
+                  px-5 py-1 mx-2 my-0.5 rounded-xl
                   transition-all duration-200 ease-out
                   hover:bg-gradient-to-r hover:from-orange-100 hover:to-orange-100 
                   hover:scale-[1.02] hover:shadow-sm
@@ -164,7 +166,7 @@ const SidebarApp: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-screen bg-[#F7EDE2] flex">
+    <div className="fixed top-0 h-screen mx-auto left-0 right-0 bg-orange-50 flex">
       {/* 主要内容区域 */}
       <div className="flex-1 flex flex-col pr-16">
         {/* 头部导航 */}
@@ -172,7 +174,7 @@ const SidebarApp: React.FC = () => {
 
         {/* 搜索表单 */}
         <div className="flex-1 px-8 py-8">
-          <div className="w-full space-y-6">
+          <div className="w-[220px] mx-auto space-y-6">
             {/* 项目选择 */}
             <div className="relative dropdown-container">
               <label className="block text-base font-semibold text-gray-800 mb-3">项目</label>
@@ -191,6 +193,7 @@ const SidebarApp: React.FC = () => {
                   setShowProjectDropdown(false);
                 }}
                 isOpen={showProjectDropdown}
+                maxHeight="max-h-40"
               />
             </div>
 
@@ -248,6 +251,7 @@ const SidebarApp: React.FC = () => {
                   setShowRegionDropdown(false);
                 }}
                 isOpen={showRegionDropdown}
+                maxHeight="max-h-96"
               />
             </div>
 
@@ -269,6 +273,7 @@ const SidebarApp: React.FC = () => {
                   setShowVideoTypeDropdown(false);
                 }}
                 isOpen={showVideoTypeDropdown}
+                maxHeight="max-h-40"
               />
             </div>
 
@@ -290,6 +295,7 @@ const SidebarApp: React.FC = () => {
                   setShowFollowersDropdown(false);
                 }}
                 isOpen={showFollowersDropdown}
+                maxHeight="max-h-40"
               />
             </div>
 
@@ -311,6 +317,7 @@ const SidebarApp: React.FC = () => {
                   setShowViewsDropdown(false);
                 }}
                 isOpen={showViewsDropdown}
+                maxHeight="max-h-40"
               />
             </div>
 
