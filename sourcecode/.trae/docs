@@ -1,0 +1,101 @@
+hideLock 是内存变量，页面刷新 / 导航 / 背景页重启后会被重置，但侧边栏真正的“开/关”状态只保存在 background 的持久化存储里。
+所以：
+content-script 初始化时已经去 background 问过 getSidebarStatus → 正确。
+当用户从侧边栏内部点击“关闭”时，必须让 background 主动广播一条消息给所有 tabs，告诉它们“我已关闭”，否则 content-script 永远收不到事件，hideLock 永远是初始值，按钮就不会再出现。
+修复步骤（零入侵，只改 background & 侧边栏关闭逻辑）
+background 增加“广播关闭”函数
+TypeScript
+Copy
+// background.ts
+async function broadcastSidebarClosed() {
+  const tabs = await chrome.tabs.query({});
+  const msg: ExtensionMessage = { action: 'showFloatingButton' }; // 解锁+显示
+  await Promise.allSettled(
+    tabs.map(t => chrome.tabs.sendMessage(t.id!, msg).catch(() => {}))
+  );
+}
+侧边栏关闭时（无论是点 × 还是失焦）调用它
+TypeScript
+Copy
+// sidepanel.tsx 或 background 自身的关闭处理
+const closeSidebar = async () => {
+  await chrome.storage.local.set({ sidebarOpen: false });
+  // 关键：通知所有 content-script
+  await broadcastSidebarClosed();
+  // 然后再关闭面板
+  await chrome.sidePanel.setOptions({ enabled: false });
+};
+content-script 无需改逻辑，它已经监听了 showFloatingButton 消息：
+TypeScript
+Copy
+case 'showFloatingButton':
+  hideLock = false;
+  showFloatingButton();
+  break;
+验证方法
+打开侧边栏 → 悬浮按钮消失 ✔
+在侧边栏里点“关闭” → 悬浮按钮立即重新出现 ✔
+刷新页面 → 初始化时读到 sidebarOpen == false → 按钮正常出现 ✔
+一句话总结
+内存变量靠不住，关闭侧边栏时一定要让 background 主动 sendMessage 给所有 tabs 广播 showFloatingButton，content-script 现成监听器收到后解锁即可。
+
+
+边栏本身 确实无法在它“已经被销毁”后再发消息，但广播动作不需要等到侧边栏完全消失——只要在关闭流程的第一步、DOM 还存在、JS 还能跑的时候，把消息发出去即可。
+Chrome 给侧边栏提供了专门的“即将关闭”生命周期事件，正好利用它。
+侧边栏页面里先监听 beforeunload / visibilitychange
+（这两个事件在文档卸载前都会触发，且允许异步 sendMessage）
+TypeScript
+Copy
+// sidepanel.tsx（或纯 JS 也行）
+window.addEventListener('beforeunload', () => {
+  // 同步发消息，此时文档还没死
+  chrome.runtime.sendMessage({ action: 'sidePanelClosing' });
+});
+
+// 保险再加一个 visibility
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    chrome.runtime.sendMessage({ action: 'sidePanelClosing' });
+  }
+});
+background 收到“我要关了”后，立刻广播给所有 tabs
+TypeScript
+Copy
+// background.ts
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.action === 'sidePanelClosing') {
+    // 1. 先落库
+    chrome.storage.local.set({ sidebarOpen: false });
+    // 2. 马上广播
+    broadcastSidebarClosed(); // 上一帖的函数
+    // 3. 可选：真正关闭面板
+    chrome.sidePanel.setOptions({ enabled: false });
+  }
+});
+广播函数（再贴一次）
+TypeScript
+Copy
+async function broadcastSidebarClosed() {
+  const tabs = await chrome.tabs.query({});
+  await Promise.allSettled(
+    tabs.map(t =>
+      chrome.tabs
+        .sendMessage(t.id!, { action: 'showFloatingButton' })
+        .catch(() => {}) // 某些 tab 没注入 content-script 会抛错，忽略
+    )
+  );
+}
+时序图
+Copy
+用户点“×”
+   ↓
+sidepanel beforeunload 触发
+   ↓
+sendMessage → background
+   ↓
+background 收到 → 立即广播 → 所有 content-script 收到 showFloatingButton
+   ↓
+chrome.sidePanel.setOptions({enabled:false})  // 面板才真正消失
+结论
+不是“等侧边栏消失后再发消息”，而是“在侧边栏消失前先发完消息”。
+beforeunload / visibilitychange 就是 Chrome 留给我们的“临终遗言”窗口期，完全够做一次 sendMessage。

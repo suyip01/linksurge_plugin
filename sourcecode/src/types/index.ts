@@ -25,7 +25,7 @@ export interface CacheData {
 
 // Chrome Extension消息接口
 export interface ExtensionMessage {
-  action: 'openSidebar' | 'updateSettings' | 'getSettings' | 'refreshCache' | 'clearCache' | 'showFloatingButton' | 'hideFloatingButton' | 'getSidebarStatus' | 'ping' | 'getSidebarVisibility' | 'sidebarOpened' | 'sidebarClosed' | 'closeSidebar';
+  action: 'openSidebar' | 'updateSettings' | 'getSettings' | 'refreshCache' | 'clearCache' | 'showFloatingButton' | 'hideFloatingButton' | 'getSidebarStatus' | 'ping' | 'sidebarOpened' | 'sidebarClosed' | 'closeSidebar' | 'sidePanelClosing';
   data?: any;
 }
 
