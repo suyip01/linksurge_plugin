@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="filename" content="health_dashboard_enhanced.html">
+    <title>Health Dashboard - Enhanced</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+        .metric-card {
+            transition: all 0.2s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+        /* 确保图表容器有明确的尺寸 */
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            min-height: 60px;
+        }
+        .main-chart-container {
+            width: 100%;
+            height: 300px;
+            min-height: 300px;
+        }
+        .mini-chart-container {
+            width: 100%;
+            height: 80px;
+            min-height: 80px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="w-[1440px] min-h-screen mx-auto bg-white">
+        <!-- Header -->
+        <header class="flex items-center justify-between p-6 bg-white border-b border-gray-100">
+            <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-plus text-white text-lg"></i>
+                </div>
+                <h1 class="text-2xl font-semibold text-gray-900">Good Morning, Mori! 👋</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <input type="text" placeholder="Search anything..." class="w-80 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                </div>
+                <i class="fas fa-question-circle text-gray-400 text-lg cursor-pointer"></i>
+                <i class="fas fa-bell text-gray-400 text-lg cursor-pointer"></i>
+                <i class="fas fa-cog text-gray-400 text-lg cursor-pointer"></i>
+                <button class="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center space-x-2 hover:bg-blue-600">
+                    <span>Consult AI Assistant</span>
+                    <i class="fas fa-comment"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex">
+            <!-- Sidebar -->
+            <aside class="w-16 bg-white border-r border-gray-100 py-6">
+                <nav class="space-y-6">
+                    <div class="flex flex-col items-center space-y-4">
+                        <i class="fas fa-running text-gray-300 text-lg cursor-pointer hover:text-blue-500"></i>
+                        <i class="fas fa-chart-bar text-blue-500 text-lg cursor-pointer"></i>
+                        <i class="fas fa-calendar text-gray-300 text-lg cursor-pointer hover:text-blue-500"></i>
+                        <i class="fas fa-user text-gray-300 text-lg cursor-pointer hover:text-blue-500"></i>
+                        <i class="fas fa-bell text-gray-300 text-lg cursor-pointer hover:text-blue-500"></i>
+                        <i class="fas fa-cog text-gray-300 text-lg cursor-pointer hover:text-blue-500"></i>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 p-6">
+                <div class="grid grid-cols-12 gap-6">
+                    <!-- Fitness Tracker Card -->
+                    <div class="col-span-3 bg-white rounded-xl p-6 card-shadow metric-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium text-gray-900">Fitness Tracker</h3>
+                            <i class="fas fa-info-circle text-gray-300 cursor-pointer"></i>
+                        </div>
+                        <div class="flex items-center space-x-3 mb-6">
+                            <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
+                                <i class="fas fa-running text-blue-500 text-xl"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Steps Taken</p>
+                            <p class="text-3xl font-bold text-gray-900">18,751</p>
+                            <div class="mt-4 w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: 75%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">75% of daily goal</p>
+                        </div>
+                    </div>
+
+                    <!-- Health Metrics -->
+                    <div class="col-span-9 bg-white rounded-xl p-6 card-shadow">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-medium text-gray-900">Health Metrics</h3>
+                            <i class="fas fa-ellipsis-h text-gray-300 cursor-pointer"></i>
+                        </div>
+                        <div class="grid grid-cols-4 gap-8">
+                            <!-- Heart Rate -->
+                            <div class="text-center">
+                                <h4 class="text-sm text-gray-500 mb-4 flex items-center justify-center">
+                                    <i class="fas fa-heart text-red-400 mr-2"></i>
+                                    Heart Rate
+                                </h4>
+                                <div id="heartRateChart" class="mini-chart-container mb-4"></div>
+                                <p class="text-2xl font-bold text-gray-900">78.2</p>
+                                <p class="text-sm text-gray-500">BPM</p>
+                            </div>
+                            <!-- Blood Pressure -->
+                            <div class="text-center">
+                                <h4 class="text-sm text-gray-500 mb-4 flex items-center justify-center">
+                                    <i class="fas fa-tint text-pink-400 mr-2"></i>
+                                    Blood Pressure
+                                </h4>
+                                <div id="bloodPressureChart" class="mini-chart-container mb-4"></div>
+                                <p class="text-2xl font-bold text-gray-900">120</p>
+                                <p class="text-sm text-gray-500">mmHg</p>
+                            </div>
+                            <!-- Sleep -->
+                            <div class="text-center">
+                                <h4 class="text-sm text-gray-500 mb-4 flex items-center justify-center">
+                                    <i class="fas fa-moon text-blue-400 mr-2"></i>
+                                    Sleep
+                                </h4>
+                                <div id="sleepChart" class="mini-chart-container mb-4"></div>
+                                <p class="text-2xl font-bold text-gray-900">7.28</p>
+                                <p class="text-sm text-gray-500">hr</p>
+                            </div>
+                            <!-- Nutrition -->
+                            <div class="text-center">
+                                <h4 class="text-sm text-gray-500 mb-4 flex items-center justify-center">
+                                    <i class="fas fa-utensils text-purple-400 mr-2"></i>
+                                    Nutrition
+                                </h4>
+                                <div id="nutritionChart" class="mini-chart-container mb-4"></div>
+                                <p class="text-2xl font-bold text-gray-900">412.8</p>
+                                <p class="text-sm text-gray-500">kcal</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Heart Rate Detailed Chart -->
+                    <div class="col-span-7 bg-white rounded-xl p-6 card-shadow">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-medium text-gray-900">Heart Rate</h3>
+                            <i class="fas fa-cog text-gray-300 cursor-pointer"></i>
+                        </div>
+                        <div id="heartRateDetailChart" class="main-chart-container mb-6"></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <p class="text-3xl font-bold text-gray-900">95.3</p>
+                                <p class="text-sm text-gray-500">BPM</p>
+                            </div>
+                            <div class="flex items-center space-x-2 bg-green-50 px-3 py-1 rounded-full">
+                                <i class="fas fa-check-circle text-green-500 text-sm"></i>
+                                <span class="text-sm text-green-600">Normal Range</span>
+                            </div>
+                        </div>
+                        <div class="flex space-x-8 text-sm">
+                            <button class="text-blue-500 border-b-2 border-blue-500 pb-1 font-medium">1d</button>
+                            <button class="text-gray-500 hover:text-gray-700">1w</button>
+                            <button class="text-gray-500 hover:text-gray-700">1m</button>
+                            <button class="text-gray-500 hover:text-gray-700">1y</button>
+                            <button class="text-gray-500 hover:text-gray-700">All Time</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="col-span-5 space-y-6">
+                        <!-- AI Chatbot -->
+                        <div class="bg-white rounded-xl p-6 card-shadow">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-medium text-gray-900">Wellness AI Chatbot</h3>
+                                <i class="fas fa-robot text-blue-500"></i>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-robot text-blue-500 text-sm"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-700 mb-3">Of course, Mori! Here is your blood pressure PDF data for January 2024.</p>
+                                        <div class="p-3 bg-gray-50 rounded-lg border">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center space-x-3">
+                                                    <i class="fas fa-file-pdf text-red-500 text-lg"></i>
+                                                    <div>
+                                                        <p class="text-sm font-medium text-gray-900">blood_pressure_jan.pdf</p>
+                                                        <p class="text-xs text-gray-500">Blood Pressure Jan 2024 • 2.3mb • PDF Format</p>
+                                                    </div>
+                                                </div>
+                                                <button class="text-blue-500 hover:text-blue-600">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-gray-400 mt-2">11:25 AM</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-3 pt-4 border-t border-gray-100">
+                                    <div class="flex-1 relative">
+                                        <input type="text" placeholder="Type to start chatting..." class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                                        <i class="fas fa-paperclip absolute right-8 top-3 text-gray-400 cursor-pointer"></i>
+                                    </div>
+                                    <button class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sleep Schedule -->
+                        <div class="bg-white rounded-xl p-6 card-shadow">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="font-medium text-gray-900">Your Sleep Schedule</h3>
+                                <i class="fas fa-ellipsis-h text-gray-300 cursor-pointer"></i>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-moon text-indigo-500 text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-900 text-lg">10:40 PM</p>
+                                        <p class="text-sm text-gray-500">6h 25m from now</p>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <input type="checkbox" id="sleepToggle" class="sr-only" checked>
+                                    <label for="sleepToggle" class="relative cursor-pointer">
+                                        <div class="w-14 h-7 bg-blue-500 rounded-full shadow-inner flex items-center">
+                                            <div class="w-6 h-6 bg-white rounded-full shadow transform translate-x-7 transition-transform duration-200"></div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Avatar -->
+                <div class="fixed bottom-6 left-6">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80" alt="Profile" class="w-12 h-12 rounded-full border-2 border-white shadow-lg cursor-pointer">
+                        <div class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">2</span>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // 等待DOM完全加载后再初始化图表
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延迟确保容器完全渲染
+            setTimeout(initializeCharts, 100);
+        });
+
+        function initializeCharts() {
+            // Heart Rate mini chart - 精确复现原设计的柱状图样式
+            const heartRateElement = document.getElementById('heartRateChart');
+            if (heartRateElement) {
+                const heartRate = echarts.init(heartRateElement);
+                heartRate.setOption({
+                    grid: { 
+                        top: 10, 
+                        bottom: 10, 
+                        left: 10, 
+                        right: 10 
+                    },
+                    xAxis: { 
+                        type: 'category', 
+                        show: false, 
+                        data: ['M', 'T', 'W', 'T', 'F', 'S', 'S'] 
+                    },
+                    yAxis: { 
+                        type: 'value', 
+                        show: false,
+                        min: 60,
+                        max: 90
+                    },
+                    series: [{
+                        data: [75, 68, 82, 78, 71, 85, 79],
+                        type: 'bar',
+                        itemStyle: { 
+                            color: '#6366f1',
+                            borderRadius: [2, 2, 0, 0]
+                        },
+                        barWidth: '40%'
+                    }],
+                    animation: true,
+                    animationDuration: 1000
+                });
+                
+                // 响应式调整
+                window.addEventListener('resize', function() {
+                    heartRate.resize();
+                });
+            }
+
+            // Blood Pressure chart - 波动的线图
+            const bloodPressureElement = document.getElementById('bloodPressureChart');
+            if (bloodPressureElement) {
+                const bloodPressure = echarts.init(bloodPressureElement);
+                bloodPressure.setOption({
+                    grid: { 
+                        top: 15, 
+                        bottom: 15, 
+                        left: 15, 
+                        right: 15 
+                    },
+                    xAxis: { 
+                        type: 'category', 
+                        show: false, 
+                        data: ['M', 'T', 'W', 'T', 'F', 'S', 'S'] 
+                    },
+                    yAxis: { 
+                        type: 'value', 
+                        show: false,
+                        min: 110,
+                        max: 130
+                    },
+                    series: [{
+                        data: [118, 125, 120, 115, 128, 122, 119],
+                        type: 'line',
+                        smooth: true,
+                        itemStyle: { color: '#ec4899' },
+                        lineStyle: { 
+                            color: '#ec4899',
+                            width: 3
+                        },
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: 'rgba(236, 72, 153, 0.3)' },
+                                    { offset: 1, color: 'rgba(236, 72, 153, 0.05)' }
+                                ]
+                            }
+                        }
+                    }],
+                    animation: true,
+                    animationDuration: 1200
+                });
+                
+                window.addEventListener('resize', function() {
+                    bloodPressure.resize();
+                });
+            }
+
+            // Sleep chart - 蓝色柱状图
+            const sleepElement = document.getElementById('sleepChart');
+            if (sleepElement) {
+                const sleep = echarts.init(sleepElement);
+                sleep.setOption({
+                    grid: { 
+                        top: 10, 
+                        bottom: 10, 
+                        left: 10, 
+                        right: 10 
+                    },
+                    xAxis: { 
+                        type: 'category', 
+                        show: false, 
+                        data: ['M', 'T', 'W', 'T', 'F', 'S', 'S'] 
+                    },
+                    yAxis: { 
+                        type: 'value', 
+                        show: false,
+                        min: 5,
+                        max: 9
+                    },
+                    series: [{
+                        data: [6.5, 7.2, 8.1, 7.8, 6.8, 8.5, 7.9],
+                        type: 'bar',
+                        itemStyle: { 
+                            color: '#06b6d4',
+                            borderRadius: [2, 2, 0, 0]
+                        },
+                        barWidth: '40%'
+                    }],
+                    animation: true,
+                    animationDuration: 1400
+                });
+                
+                window.addEventListener('resize', function() {
+                    sleep.resize();
+                });
+            }
+
+            // Nutrition chart - 紫色柱状图
+            const nutritionElement = document.getElementById('nutritionChart');
+            if (nutritionElement) {
+                const nutrition = echarts.init(nutritionElement);
+                nutrition.setOption({
+                    grid: { 
+                        top: 10, 
+                        bottom: 10, 
+                        left: 10, 
+                        right: 10 
+                    },
+                    xAxis: { 
+                        type: 'category', 
+                        show: false, 
+                        data: ['M', 'T', 'W', 'T', 'F', 'S', 'S'] 
+                    },
+                    yAxis: { 
+                        type: 'value', 
+                        show: false,
+                        min: 300,
+                        max: 500
+                    },
+                    series: [{
+                        data: [380, 420, 450, 390, 380, 470, 430],
+                        type: 'bar',
+                        itemStyle: { 
+                            color: '#a855f7',
+                            borderRadius: [2, 2, 0, 0]
+                        },
+                        barWidth: '40%'
+                    }],
+                    animation: true,
+                    animationDuration: 1600
+                });
+                
+                window.addEventListener('resize', function() {
+                    nutrition.resize();
+                });
+            }
+
+            // Detailed Heart Rate Chart - 详细的心率图表
+            const heartRateDetailElement = document.getElementById('heartRateDetailChart');
+            if (heartRateDetailElement) {
+                const heartRateDetail = echarts.init(heartRateDetailElement);
+                
+                // 生成24小时的心率数据
+                const timeData = [];
+                const heartRateData = [];
+                for (let i = 0; i < 24; i++) {
+                    timeData.push(i.toString().padStart(2, '0') + ':00');
+                    // 模拟真实的心率变化：睡眠时较低，活动时较高
+                    let baseRate = 72;
+                    if (i >= 22 || i <= 6) { // 睡眠时间
+                        baseRate = 58 + Math.random() * 10;
+                    } else if (i >= 7 && i <= 9 || i >= 17 && i <= 19) { // 活动时间
+                        baseRate = 85 + Math.random() * 15;
+                    } else {
+                        baseRate = 70 + Math.random() * 15;
+                    }
+                    heartRateData.push(Math.round(baseRate));
+                }
+                
+                heartRateDetail.setOption({
+                    grid: { 
+                        top: 20, 
+                        bottom: 40, 
+                        left: 50, 
+                        right: 30 
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: timeData,
+                        axisLine: { 
+                            show: true,
+                            lineStyle: { color: '#e5e7eb' }
+                        },
+                        axisTick: { show: false },
+                        axisLabel: { 
+                            color: '#9ca3af', 
+                            fontSize: 11,
+                            interval: 3
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 40,
+                        max: 110,
+                        axisLine: { show: false },
+                        axisTick: { show: false },
+                        axisLabel: { 
+                            color: '#9ca3af', 
+                            fontSize: 11
+                        },
+                        splitLine: { 
+                            lineStyle: { 
+                                color: '#f3f4f6',
+                                type: 'solid'
+                            } 
+                        }
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#e5e7eb',
+                        textStyle: { color: '#374151' }
+                    },
+                    series: [{
+                        data: heartRateData,
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: { 
+                            color: '#3b82f6', 
+                            width: 3 
+                        },
+                        itemStyle: { 
+                            color: '#3b82f6',
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        },
+                        symbol: 'circle',
+                        symbolSize: 4,
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: 'rgba(59, 130, 246, 0.2)' },
+                                    { offset: 1, color: 'rgba(59, 130, 246, 0.02)' }
+                                ]
+                            }
+                        },
+                        markPoint: {
+                            data: [
+                                { 
+                                    coord: [15, heartRateData[15]], 
+                                    name: 'Current',
+                                    itemStyle: { 
+                                        color: '#3b82f6',
+                                        borderColor: '#ffffff',
+                                        borderWidth: 3
+                                    }
+                                }
+                            ],
+                            symbolSize: 8,
+                            label: {
+                                show: true,
+                                position: 'top',
+                                backgroundColor: '#3b82f6',
+                                color: '#ffffff',
+                                padding: [4, 8],
+                                borderRadius: 4,
+                                fontSize: 11,
+                                formatter: function(params) {
+                                    return heartRateData[15] + ' bpm';
+                                }
+                            }
+                        }
+                    }],
+                    animation: true,
+                    animationDuration: 2000
+                });
+                
+                window.addEventListener('resize', function() {
+                    heartRateDetail.resize();
+                });
+            }
+        }
+
+        // 添加切换时间段的交互功能
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON' && e.target.textContent.match(/\d+[dwmy]|All Time/)) {
+                // 移除所有按钮的活跃状态
+                document.querySelectorAll('button').forEach(btn => {
+                    btn.className = btn.className.replace(/text-blue-500.*?border-blue-500.*?font-medium/, 'text-gray-500 hover:text-gray-700');
+                });
+                
+                // 添加当前按钮的活跃状态
+                e.target.className = 'text-blue-500 border-b-2 border-blue-500 pb-1 font-medium';
+            }
+        });
+
+        // 睡眠开关交互
+        document.getElementById('sleepToggle').addEventListener('change', function() {
+            const toggle = this.nextElementSibling.querySelector('div div');
+            if (this.checked) {
+                toggle.style.transform = 'translateX(1.75rem)';
+                this.nextElementSibling.querySelector('div').style.backgroundColor = '#3b82f6';
+            } else {
+                toggle.style.transform = 'translateX(0)';
+                this.nextElementSibling.querySelector('div').style.backgroundColor = '#d1d5db';
+            }
+        });
+    </script>
+</body>
+</html> 

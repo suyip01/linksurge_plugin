@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
 import RegionSelector from './RegionSelector';
 import Navbar from './Navbar';
 import { useRouter } from './Router';
@@ -120,10 +119,10 @@ const SidebarApp: React.FC = () => {
   }) => (
     <button
       onClick={onClick}
-      className={`w-full px-5 py-2 bg-stone-50/95 rounded-3xl border border-gray-200 flex items-center justify-between text-left hover:border-orange-300 hover:shadow-md transition-all duration-200 ${className}`}
+      className={`w-full px-5 py-2 bg-stone-200/90 rounded-3xl border border-gray-200 flex items-center justify-between text-left hover:border-blue-300 hover:shadow-md transition-all duration-200 ${className}`}
     >
       <span className="text-gray-800 font-medium">{value}</span>
-      <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
     </button>
   );
 
@@ -166,7 +165,7 @@ const SidebarApp: React.FC = () => {
     return (
       <div className={`absolute top-full left-0 right-0 mt-2 z-10 ${className} ${!isOpen ? 'pointer-events-none' : ''}`}>
         <div className={`
-          bg-stone-50/95 backdrop-blur-sm border border-gray-100 rounded-3xl shadow-3xl overflow-hidden
+          bg-stone-200/90 backdrop-blur-sm border border-gray-100 rounded-3xl card-shadow overflow-hidden
           transform origin-top
           ${isOpen && !isAnimatingOut
             ? 'animate-dropdown-in' 
@@ -182,7 +181,7 @@ const SidebarApp: React.FC = () => {
                   onClick={() => onSelect(option)}
                   className={`
                     w-full text-left text-gray-700 font-medium 
-                    hover:bg-stone-300
+                    hover:bg-stone-400
                     px-5 py-1 rounded-xl
                     transition-all duration-200 ease-out
                     hover:scale-[1.02] hover:shadow-sm
@@ -199,7 +198,7 @@ const SidebarApp: React.FC = () => {
   });
 
   return (
-    <div className="fixed top-0 h-screen mx-auto left-0 right-0 bg-[#F7EDE2] flex">
+    <div className="fixed top-0 h-screen mx-auto left-0 right-0 bg-gray-50 flex">
       {/* 主要内容区域 */}
       <div className="flex-1 flex flex-col pr-12">
         {/* 头部导航 */}
@@ -210,7 +209,7 @@ const SidebarApp: React.FC = () => {
           <div className="w-[220px] mx-auto space-y-6">
             {/* 项目选择 */}
             <div className="relative dropdown-container">
-              <label className="block text-base font-semibold text-gray-800 mb-3">项目</label>
+              <label className="block text-base font-semibold text-gray-900 mb-3">项目</label>
               <DropdownButton
                 value={selectedProject}
                 onClick={() => {
@@ -234,9 +233,8 @@ const SidebarApp: React.FC = () => {
             </div>
 
             {/* 地区 */}
-            {/* 地区 */}
             <div className="relative">
-              <label className="block text-base font-semibold text-gray-800 mb-3">地区</label>
+              <label className="block text-base font-semibold text-gray-900 mb-3">地区</label>
               <RegionSelector
                 selectedRegion={selectedRegion}
                 onRegionSelect={handleRegionSelect}
@@ -245,7 +243,7 @@ const SidebarApp: React.FC = () => {
 
             {/* 视频类型 */}
             <div className="relative dropdown-container">
-              <label className="block text-base font-semibold text-gray-800 mb-3">视频类型</label>
+              <label className="block text-base font-semibold text-gray-900 mb-3">视频类型</label>
               <DropdownButton
                 value={selectedVideoType}
                 onClick={() => {
@@ -270,7 +268,7 @@ const SidebarApp: React.FC = () => {
 
             {/* 粉丝数 */}
             <div className="relative dropdown-container">
-              <label className="block text-base font-semibold text-gray-800 mb-3">粉丝数</label>
+              <label className="block text-base font-semibold text-gray-900 mb-3">粉丝数</label>
               <DropdownButton
                 value={selectedFollowers}
                 onClick={() => {
@@ -295,7 +293,7 @@ const SidebarApp: React.FC = () => {
 
             {/* 平均观看数 */}
             <div className="relative dropdown-container">
-              <label className="block text-base font-semibold text-gray-800 mb-3">平均观看数</label>
+              <label className="block text-base font-semibold text-gray-900 mb-3">平均观看数</label>
               <DropdownButton
                 value={selectedViews}
                 onClick={() => {
@@ -322,17 +320,18 @@ const SidebarApp: React.FC = () => {
             <div className="pt-4">
               <button
                 onClick={handleSearch}
-                className="w-full bg-gradient-to-r from-amber-800 to-amber-900 hover:from-amber-900 hover:to-amber-950 text-white font-semibold py-4 px-8 rounded-3xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold text-lg py-3 px-8 rounded-3xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] card-shadow metric-card"
               >
                 <span className="flex items-center justify-center gap-2">
-                  🔍 <span>找相似博主</span>
+                  <i className="fas fa-search"></i>
+                  <span>找相似博主</span>
                 </span>
               </button>
             </div>
 
             {/* 联系工作人员 */}
             <div className="text-center pt-2">
-              <button className="text-amber-700 hover:text-amber-800 text-sm font-medium underline underline-offset-2 transition-colors duration-200">
+              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium underline underline-offset-2 transition-colors duration-200">
                 联系工作人员
               </button>
             </div>

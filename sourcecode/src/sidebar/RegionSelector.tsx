@@ -331,7 +331,7 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
     <div ref={containerRef} className="relative">
       <button
         onClick={handleButtonClick}
-        className={`w-full px-5 py-2 bg-stone-50/95 rounded-3xl border border-gray-200 flex items-center justify-between text-left hover:border-orange-300 hover:shadow-md transition-all duration-200`}
+        className={`w-full px-5 py-2 bg-stone-200/90 rounded-3xl border border-gray-200 flex items-center justify-between text-left hover:border-blue-300 hover:shadow-md transition-all duration-200`}
       >
         <span className="text-gray-800 font-medium">{selectedRegion}</span>
         <ChevronDown 
@@ -344,7 +344,7 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
       {shouldRender ? (
         <div className={`absolute top-full left-0 right-0 mt-2 z-50 ${!isOpen ? 'pointer-events-none' : ''}`}>
           <div className={`
-            bg-stone-50/95 backdrop-blur-sm border border-gray-100 rounded-3xl shadow-3xl overflow-hidden 
+            bg-stone-200/90 backdrop-blur-sm border border-gray-100 rounded-3xl shadow-3xl overflow-hidden 
             transform origin-top
             ${isOpen && !isAnimatingOut
               ? 'animate-dropdown-in' 
@@ -363,7 +363,7 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
                   placeholder="搜索地区..."
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-2xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all duration-200"
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-2xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                   autoComplete="off"
                 />
               </div>
@@ -376,7 +376,7 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
                   <div key={option.value} className="mx-2 my-0.5">
                     <button
                       onClick={() => handleRegionSelect(option.value)}
-                      className="w-full text-left text-gray-700 font-medium hover:bg-stone-300 px-5 py-1 rounded-xl transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-sm"
+                      className="w-full text-left text-gray-700 font-medium hover:bg-stone-400 px-5 py-1 rounded-xl transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-sm"
                     >
                       {option.label}
                     </button>
