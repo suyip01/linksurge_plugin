@@ -12,12 +12,15 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // 动画状态管理，与 SidebarApp 保持一致
+  // 使用与 SidebarApp DropdownMenu 相同的动画状态管理
   const [shouldRender, setShouldRender] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
   // 地区选项
   const regionOptions = [
+    // 全球选项
+    { value: "全球", label: "全球 🌍", searchKey: "global" },
+    
     // A
     { value: "阿尔巴尼亚", label: "阿尔巴尼亚 🇦🇱", searchKey: "albania" },
     { value: "阿尔及利亚", label: "阿尔及利亚 🇩🇿", searchKey: "algeria" },
@@ -257,7 +260,7 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
     { value: "中国", label: "中国 🇨🇳", searchKey: "china" }
   ];
 
-  // 动画状态管理 useEffect，与 SidebarApp 保持一致
+  // 使用与 SidebarApp DropdownMenu 相同的动画状态管理逻辑
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
@@ -303,12 +306,16 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
     };
   }, [isOpen]);
 
-  // 处理地区选择
+  // 处理地区选择 - 使用 setTimeout 避免事件冲突
   const handleRegionSelect = (regionValue: string) => {
-    // 使用 React 的批处理机制，同时更新状态
-    setIsOpen(false);
-    setSearchTerm('');
+    // 先调用回调，再关闭下拉框，避免状态冲突
     onRegionSelect(regionValue);
+    
+    // 使用 setTimeout 确保状态更新的顺序
+    setTimeout(() => {
+      setIsOpen(false);
+      setSearchTerm('');
+    }, 0);
   };
 
   // 处理搜索输入
@@ -331,7 +338,7 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
     <div ref={containerRef} className="relative">
       <button
         onClick={handleButtonClick}
-        className={`w-full px-5 py-2 bg-stone-200/90 rounded-3xl border border-gray-200 flex items-center justify-between text-left hover:border-blue-300 hover:shadow-md transition-all duration-200`}
+        className={`w-full px-5 py-2 bg-stone-200/90 rounded-3xl border border-gray-200 flex items-center justify-between text-left hover:border-blue-200 hover:ring-2 hover:ring-blue-200 hover:shadow-md transition-all duration-200`}
       >
         <span className="text-gray-800 font-medium">{selectedRegion}</span>
         <ChevronDown 
@@ -341,10 +348,10 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
         />
       </button>
 
-      {shouldRender ? (
-        <div className={`absolute top-full left-0 right-0 mt-2 z-50 ${!isOpen ? 'pointer-events-none' : ''}`}>
+      {shouldRender && (
+        <div className={`absolute top-full left-0 right-0 mt-2 z-10 ${!isOpen ? 'pointer-events-none' : ''}`}>
           <div className={`
-            bg-stone-200/90 backdrop-blur-sm border border-gray-100 rounded-3xl shadow-3xl overflow-hidden 
+            bg-stone-200/90 backdrop-blur-sm border border-gray-100 rounded-3xl card-shadow overflow-hidden
             transform origin-top
             ${isOpen && !isAnimatingOut
               ? 'animate-dropdown-in' 
@@ -356,14 +363,14 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
             {/* 搜索框 */}
             <div className="p-3 border-b border-gray-200">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white" />
                 <input
                   ref={inputRef}
                   type="text"
                   placeholder="搜索地区..."
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-2xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                  className="w-full pl-10 pr-4 py-2 bg-stone-400/80 border border-gray-200 rounded-3xl text-sm text-white placeholder-white focus:outline-none focus:border-blue-200 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                   autoComplete="off"
                 />
               </div>
@@ -376,7 +383,13 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
                   <div key={option.value} className="mx-2 my-0.5">
                     <button
                       onClick={() => handleRegionSelect(option.value)}
-                      className="w-full text-left text-gray-700 font-medium hover:bg-stone-400 px-5 py-1 rounded-xl transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-sm"
+                      className={`
+                        w-full text-left text-gray-700 font-medium 
+                        hover:bg-stone-400
+                        px-5 py-1 rounded-xl
+                        transition-all duration-200 ease-out
+                        hover:scale-[1.02] hover:shadow-sm
+                      `}
                     >
                       {option.label}
                     </button>
@@ -390,7 +403,7 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ selectedRegion, onRegio
             </div>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 };

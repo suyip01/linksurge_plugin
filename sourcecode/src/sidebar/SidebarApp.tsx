@@ -119,7 +119,7 @@ const SidebarApp: React.FC = () => {
   }) => (
     <button
       onClick={onClick}
-      className={`w-full px-5 py-2 bg-stone-200/90 rounded-3xl border border-gray-200 flex items-center justify-between text-left hover:border-blue-300 hover:shadow-md transition-all duration-200 ${className}`}
+      className={`w-full px-5 py-2 bg-stone-200/90 rounded-3xl border border-gray-200 flex items-center justify-between text-left hover:border-blue-300 hover:ring-2 hover:ring-blue-200 hover:shadow-md transition-all duration-200 ${className}`}
     >
       <span className="text-gray-800 font-medium">{value}</span>
       <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
