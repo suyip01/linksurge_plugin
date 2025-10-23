@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, User, BookOpen, Clock, Wallet, X } from 'lucide-react';
+import { ChevronDown, User, BookOpen, Clock, Wallet } from 'lucide-react';
+import RegionSelector from './RegionSelector';
 
 const SidebarApp: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState('选择项目');
@@ -8,31 +9,25 @@ const SidebarApp: React.FC = () => {
   const [selectedFollowers, setSelectedFollowers] = useState('不限');
   const [selectedViews, setSelectedViews] = useState('不限');
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
-  const [showRegionDropdown, setShowRegionDropdown] = useState(false);
   const [showVideoTypeDropdown, setShowVideoTypeDropdown] = useState(false);
   const [showFollowersDropdown, setShowFollowersDropdown] = useState(false);
   const [showViewsDropdown, setShowViewsDropdown] = useState(false);
   
-  // 地区搜索相关状态
-  const [isRegionSearchMode, setIsRegionSearchMode] = useState(false);
-  const [regionSearchInput, setRegionSearchInput] = useState('');
-  const [filteredRegions, setFilteredRegions] = useState<string[]>([]);
-
   // 关闭所有下拉菜单的函数
   const closeAllDropdowns = () => {
     setShowProjectDropdown(false);
-    setShowRegionDropdown(false);
     setShowVideoTypeDropdown(false);
     setShowFollowersDropdown(false);
     setShowViewsDropdown(false);
   };
 
-  // 点击外部区域关闭下拉菜单 - 修改版本，排除输入框
+  // 点击外部区域关闭下拉菜单
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
-      // 排除输入框和其容器，避免干扰输入
-      if (!target.closest('.dropdown-container') && !target.closest('.region-search-input')) {
+      
+      // 检查是否点击在下拉菜单容器内
+      if (!target.closest('.dropdown-container')) {
         closeAllDropdowns();
       }
     };
@@ -85,44 +80,10 @@ const SidebarApp: React.FC = () => {
   const followersRanges = ['不限', '1K-10K (Nano)', '10K-100K (Micro)', '100K-500K (Mid-Tier)', '500K-1M (Macro)', '自定义'];
   const viewsRanges = ['不限', '1K-5K', '5K-10K', '10K-50K', '50K-100K', '100K+', '自定义'];
 
-  // 地区选项列表
-  const regionOptions = [
-    '全球',
-    '阿尔巴尼亚 🇦🇱', '阿尔及利亚 🇩🇿', '阿富汗 🇦🇫', '阿根廷 🇦🇷', '阿联酋 🇦🇪', '阿曼 🇴🇲', '阿塞拜疆 🇦🇿',
-    '埃及 🇪🇬', '埃塞俄比亚 🇪🇹', '爱尔兰 🇮🇪', '爱沙尼亚 🇪🇪', '安道尔 🇦🇩', '安哥拉 🇦🇴', '安提瓜和巴布达 🇦🇬',
-    '奥地利 🇦🇹', '澳大利亚 🇦🇺', '澳门 🇲🇴',
-    '巴巴多斯 🇧🇧', '巴布亚新几内亚 🇵🇬', '巴哈马 🇧🇸', '巴基斯坦 🇵🇰', '巴拉圭 🇵🇾', '巴林 🇧🇭', '巴拿马 🇵🇦',
-    '巴西 🇧🇷', '白俄罗斯 🇧🇾', '保加利亚 🇧🇬', '贝宁 🇧🇯', '比利时 🇧🇪', '冰岛 🇮🇸', '波兰 🇵🇱', '波黑 🇧🇦',
-    '玻利维亚 🇧🇴', '博茨瓦纳 🇧🇼', '伯利兹 🇧🇿', '不丹 🇧🇹', '布基纳法索 🇧🇫', '布隆迪 🇧🇮',
-    '朝鲜 🇰🇵', '赤道几内亚 🇬🇶',
-    '丹麦 🇩🇰', '德国 🇩🇪', '东帝汶 🇹🇱', '多哥 🇹🇬', '多米尼加 🇩🇴', '多米尼克 🇩🇲',
-    '俄罗斯 🇷🇺', '厄瓜多尔 🇪🇨', '厄立特里亚 🇪🇷',
-    '法国 🇫🇷', '梵蒂冈 🇻🇦', '菲律宾 🇵🇭', '斐济 🇫🇯', '芬兰 🇫🇮', '佛得角 🇨🇻',
-    '冈比亚 🇬🇲', '刚果布 🇨🇬', '刚果金 🇨🇩', '哥伦比亚 🇨🇴', '哥斯达黎加 🇨🇷', '格林纳达 🇬🇩', '格鲁吉亚 🇬🇪',
-    '古巴 🇨🇺', '圭亚那 🇬🇾',
-    '哈萨克斯坦 🇰🇿', '海地 🇭🇹', '韩国 🇰🇷', '荷兰 🇳🇱', '黑山 🇲🇪', '洪都拉斯 🇭🇳',
-    '基里巴斯 🇰🇮', '吉布提 🇩🇯', '吉尔吉斯斯坦 🇰🇬', '几内亚 🇬🇳', '几内亚比绍 🇬🇼', '加纳 🇬🇭', '加拿大 🇨🇦',
-    '加蓬 🇬🇦', '柬埔寨 🇰🇭', '捷克 🇨🇿', '津巴布韦 🇿🇼',
-    '喀麦隆 🇨🇲', '卡塔尔 🇶🇦', '科摩罗 🇰🇲', '科特迪瓦 🇨🇮', '科威特 🇰🇼', '克罗地亚 🇭🇷', '肯尼亚 🇰🇪', '库克群岛 🇨🇰',
-    '拉脱维亚 🇱🇻', '莱索托 🇱🇸', '老挝 🇱🇦', '黎巴嫩 🇱🇧', '立陶宛 🇱🇹', '利比里亚 🇱🇷', '利比亚 🇱🇾',
-    '列支敦士登 🇱🇮', '卢森堡 🇱🇺', '卢旺达 🇷🇼', '罗马尼亚 🇷🇴',
-    '马达加斯加 🇲🇬', '马尔代夫 🇲🇻', '马耳他 🇲🇹', '马拉维 🇲🇼', '马来西亚 🇲🇾', '马里 🇲🇱', '马绍尔群岛 🇲🇭',
-    '毛里求斯 🇲🇺', '毛里塔尼亚 🇲🇷', '美国 🇺🇸', '蒙古 🇲🇳', '孟加拉国 🇧🇩', '秘鲁 🇵🇪', '密克罗尼西亚 🇫🇲',
-    '缅甸 🇲🇲', '摩尔多瓦 🇲🇩', '摩洛哥 🇲🇦', '摩纳哥 🇲🇨', '莫桑比克 🇲🇿', '墨西哥 🇲🇽',
-    '纳米比亚 🇳🇦', '南非 🇿🇦', '南苏丹 🇸🇸', '瑙鲁 🇳🇷', '尼泊尔 🇳🇵', '尼加拉瓜 🇳🇮', '尼日尔 🇳🇪', '尼日利亚 🇳🇬', '挪威 🇳🇴',
-    '帕劳 🇵🇼', '葡萄牙 🇵🇹',
-    '日本 🇯🇵', '瑞典 🇸🇪', '瑞士 🇨🇭',
-    '萨尔瓦多 🇸🇻', '萨摩亚 🇼🇸', '塞尔维亚 🇷🇸', '塞拉利昂 🇸🇱', '塞内加尔 🇸🇳', '塞浦路斯 🇨🇾', '塞舌尔 🇸🇨',
-    '沙特阿拉伯 🇸🇦', '圣多美和普林西比 🇸🇹', '圣基茨和尼维斯 🇰🇳', '圣卢西亚 🇱🇨', '圣马力诺 🇸🇲', '圣文森特和格林纳丁斯 🇻🇨',
-    '斯里兰卡 🇱🇰', '斯洛伐克 🇸🇰', '斯洛文尼亚 🇸🇮', '斯威士兰 🇸🇿', '苏丹 🇸🇩', '苏里南 🇸🇷', '所罗门群岛 🇸🇧', '索马里 🇸🇴',
-    '塔吉克斯坦 🇹🇯', '台湾 🇹🇼', '泰国 🇹🇭', '坦桑尼亚 🇹🇿', '汤加 🇹🇴', '特立尼达和多巴哥 🇹🇹', '突尼斯 🇹🇳',
-    '图瓦卢 🇹🇻', '土耳其 🇹🇷', '土库曼斯坦 🇹🇲',
-    '瓦努阿图 🇻🇺', '危地马拉 🇬🇹', '委内瑞拉 🇻🇪', '文莱 🇧🇳', '乌干达 🇺🇬', '乌克兰 🇺🇦', '乌拉圭 🇺🇾', '乌兹别克斯坦 🇺🇿',
-    '西班牙 🇪🇸', '希腊 🇬🇷', '新加坡 🇸🇬', '新西兰 🇳🇿', '匈牙利 🇭🇺', '叙利亚 🇸🇾', '香港 🇭🇰',
-    '牙买加 🇯🇲', '亚美尼亚 🇦🇲', '也门 🇾🇪', '伊拉克 🇮🇶', '伊朗 🇮🇷', '以色列 🇮🇱', '意大利 🇮🇹',
-    '印度 🇮🇳', '印度尼西亚 🇮🇩', '英国 🇬🇧', '约旦 🇯🇴', '越南 🇻🇳',
-    '赞比亚 🇿🇲', '乍得 🇹🇩', '智利 🇨🇱', '中非 🇨🇫', '中国 🇨🇳'
-  ];
+  // 处理地区选择
+  const handleRegionSelect = (region: string) => {
+    setSelectedRegion(region);
+  };
 
   const handleSearch = () => {
     // 处理搜索逻辑
@@ -133,40 +94,6 @@ const SidebarApp: React.FC = () => {
       followers: selectedFollowers,
       views: selectedViews
     });
-  };
-
-  // 地区搜索过滤功能 - 添加防抖
-  const handleRegionSearch = React.useCallback((input: string) => {
-    setRegionSearchInput(input);
-    // 使用 setTimeout 实现简单的防抖
-    setTimeout(() => {
-      if (input.trim() === '') {
-        setFilteredRegions(regionOptions);
-      } else {
-        const filtered = regionOptions.filter(region => 
-          region.toLowerCase().includes(input.toLowerCase())
-        );
-        setFilteredRegions(filtered);
-      }
-    }, 100); // 100ms 延迟
-  }, [regionOptions]);
-
-  // 处理地区选择
-  const handleRegionSelect = (region: string) => {
-    setSelectedRegion(region);
-    setIsRegionSearchMode(false);
-    setRegionSearchInput('');
-    setShowRegionDropdown(false);
-  };
-
-  // 处理地区按钮点击
-  const handleRegionButtonClick = () => {
-    closeAllDropdowns();
-    // 总是进入搜索模式并显示下拉菜单
-    setIsRegionSearchMode(true);
-    setShowRegionDropdown(true);
-    setRegionSearchInput(''); // 清空搜索输入
-    setFilteredRegions(regionOptions); // 重置过滤结果
   };
 
   const DropdownButton = ({ 
@@ -189,64 +116,7 @@ const SidebarApp: React.FC = () => {
     </button>
   );
 
-  // 地区搜索输入框组件 - 简化版本
-  const RegionSearchInput = ({ 
-    value, 
-    onChange, 
-    onBlur,
-    onClear,
-    placeholder = "搜索地区..."
-  }: { 
-    value: string; 
-    onChange: (value: string) => void;
-    onBlur?: () => void;
-    onClear?: () => void;
-    placeholder?: string;
-  }) => {
-    const inputRef = React.useRef<HTMLInputElement>(null);
-
-    // 自动聚焦
-    React.useEffect(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, []);
-
-    const handleClearClick = (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (onClear) {
-        onClear();
-      }
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    };
-
-    return (
-      <div className="relative region-search-input">
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onBlur={onBlur}
-          placeholder={placeholder}
-          className="w-full px-5 py-2 bg-stone-50/95 rounded-3xl border border-gray-200 text-gray-800 font-medium focus:outline-none focus:border-orange-300 focus:shadow-md transition-all duration-200 pr-10"
-        />
-        {value && (
-          <button
-            onClick={handleClearClick}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    );
-  };
-
-  const DropdownMenu = ({ 
+  const DropdownMenu = React.memo(({ 
     options, 
     onSelect, 
     isOpen, 
@@ -259,36 +129,63 @@ const SidebarApp: React.FC = () => {
     className?: string; 
     maxHeight?: string;
   }) => {
-    if (!isOpen) return null;
-    
+    // 使用内部状态来管理动画，避免闪烁
+    const [shouldRender, setShouldRender] = useState(isOpen);
+    const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+
+    useEffect(() => {
+      if (isOpen) {
+        setShouldRender(true);
+        setIsAnimatingOut(false);
+      } else if (shouldRender) {
+        setIsAnimatingOut(true);
+        // 等待动画完成后再停止渲染
+        const timer = setTimeout(() => {
+          setShouldRender(false);
+          setIsAnimatingOut(false);
+        }, 300); // 匹配动画持续时间
+        return () => clearTimeout(timer);
+      }
+    }, [isOpen, shouldRender]);
+
+    if (!shouldRender) {
+      return null;
+    }
+
     return (
-      <div className={`absolute top-full left-0 right-0 mt-2 z-10 ${className}`}>
+      <div className={`absolute top-full left-0 right-0 mt-2 z-10 ${className} ${!isOpen ? 'pointer-events-none' : ''}`}>
         <div className={`
           bg-stone-50/95 backdrop-blur-sm border border-gray-100 rounded-3xl shadow-3xl overflow-hidden
-          transform transition-all duration-300 ease-out origin-top
-          opacity-100 scale-100 translate-y-0
+          transform origin-top
+          ${isOpen && !isAnimatingOut
+            ? 'animate-dropdown-in' 
+            : isAnimatingOut
+            ? 'animate-dropdown-out'
+            : 'opacity-0'
+          }
         `}>
           <div className={`overflow-y-auto ${maxHeight} scrollbar-hide`}>
             {options.map((option) => (
-              <button
-                key={option}
-                onClick={() => onSelect(option)}
-                className={`
-                  w-full text-left text-gray-700 font-medium 
-                  hover:bg-stone-300
-                  px-5 py-1 mx-2 my-0.5 rounded-xl
-                  transition-all duration-200 ease-out
-                  hover:scale-[1.02] hover:shadow-sm
-                `}
-              >
-                {option}
-              </button>
+              <div key={option} className="mx-2 my-0.5">
+                <button
+                  onClick={() => onSelect(option)}
+                  className={`
+                    w-full text-left text-gray-700 font-medium 
+                    hover:bg-stone-300
+                    px-5 py-1 rounded-xl
+                    transition-all duration-200 ease-out
+                    hover:scale-[1.02] hover:shadow-sm
+                  `}
+                >
+                  {option}
+                </button>
+              </div>
             ))}
           </div>
         </div>
       </div>
     );
-  };
+  });
 
   return (
     <div className="fixed top-0 h-screen mx-auto left-0 right-0 bg-[#F7EDE2] flex">
@@ -306,7 +203,10 @@ const SidebarApp: React.FC = () => {
               <DropdownButton
                 value={selectedProject}
                 onClick={() => {
-                  closeAllDropdowns();
+                  // 只有在当前下拉框关闭时才关闭其他下拉框
+                  if (!showProjectDropdown) {
+                    closeAllDropdowns();
+                  }
                   setShowProjectDropdown(!showProjectDropdown);
                 }}
                 isOpen={showProjectDropdown}
@@ -323,31 +223,12 @@ const SidebarApp: React.FC = () => {
             </div>
 
             {/* 地区 */}
-            <div className="relative dropdown-container">
+            {/* 地区 */}
+            <div className="relative">
               <label className="block text-base font-semibold text-gray-800 mb-3">地区</label>
-              {isRegionSearchMode ? (
-                <RegionSearchInput
-                  value={regionSearchInput}
-                  onChange={handleRegionSearch}
-                  onClear={() => {
-                    setRegionSearchInput('');
-                    setFilteredRegions(regionOptions);
-                    setSelectedRegion('全球');
-                  }}
-                  // 移除 onBlur 处理，避免干扰输入
-                />
-              ) : (
-                <DropdownButton
-                  value={selectedRegion}
-                  onClick={handleRegionButtonClick}
-                  isOpen={showRegionDropdown}
-                />
-              )}
-              <DropdownMenu
-                options={regionSearchInput ? filteredRegions : regionOptions}
-                onSelect={handleRegionSelect}
-                isOpen={showRegionDropdown}
-                maxHeight="max-h-96"
+              <RegionSelector
+                selectedRegion={selectedRegion}
+                onRegionSelect={handleRegionSelect}
               />
             </div>
 
@@ -357,7 +238,10 @@ const SidebarApp: React.FC = () => {
               <DropdownButton
                 value={selectedVideoType}
                 onClick={() => {
-                  closeAllDropdowns();
+                  // 只有在当前下拉框关闭时才关闭其他下拉框
+                  if (!showVideoTypeDropdown) {
+                    closeAllDropdowns();
+                  }
                   setShowVideoTypeDropdown(!showVideoTypeDropdown);
                 }}
                 isOpen={showVideoTypeDropdown}
@@ -379,7 +263,10 @@ const SidebarApp: React.FC = () => {
               <DropdownButton
                 value={selectedFollowers}
                 onClick={() => {
-                  closeAllDropdowns();
+                  // 只有在当前下拉框关闭时才关闭其他下拉框
+                  if (!showFollowersDropdown) {
+                    closeAllDropdowns();
+                  }
                   setShowFollowersDropdown(!showFollowersDropdown);
                 }}
                 isOpen={showFollowersDropdown}
@@ -401,7 +288,10 @@ const SidebarApp: React.FC = () => {
               <DropdownButton
                 value={selectedViews}
                 onClick={() => {
-                  closeAllDropdowns();
+                  // 只有在当前下拉框关闭时才关闭其他下拉框
+                  if (!showViewsDropdown) {
+                    closeAllDropdowns();
+                  }
                   setShowViewsDropdown(!showViewsDropdown);
                 }}
                 isOpen={showViewsDropdown}
@@ -448,7 +338,7 @@ const SidebarApp: React.FC = () => {
             title="历史任务"
           >
             <Clock className="w-5 h-5 text-gray-600 group-hover:text-gray-800" />
-            <span className="text-xs text-gray-600 group-hover:text-gray-800">历史任务</span>
+            <span className="text-xs font-semibold text-gray-600 group-hover:text-gray-800">历史任务</span>
           </button>
 
           {/* 教程 */}
@@ -457,7 +347,7 @@ const SidebarApp: React.FC = () => {
             title="教程"
           >
             <BookOpen className="w-5 h-5 text-gray-600 group-hover:text-gray-800" />
-            <span className="text-xs text-gray-600 group-hover:text-gray-800">教程</span>
+            <span className="text-xs font-semibold text-gray-600 group-hover:text-gray-800">教程</span>
           </button>
 
           {/* 余额 */}
@@ -466,7 +356,7 @@ const SidebarApp: React.FC = () => {
             title="余额"
           >
             <Wallet className="w-5 h-5 text-gray-600 group-hover:text-gray-800" />
-            <span className="text-xs text-gray-600 group-hover:text-gray-800">余额</span>
+            <span className="text-xs font-semibold text-gray-600 group-hover:text-gray-800">余额</span>
           </button>
 
           {/* 用户头像 */}

@@ -20,6 +20,8 @@ export default {
       },
       animation: {
         'slide-in': 'slideIn 0.3s ease-out forwards',
+        'dropdown-in': 'dropdownIn 0.4s ease-out forwards',
+        'dropdown-out': 'dropdownOut 0.3s ease-in forwards',
       },
       keyframes: {
         slideIn: {
@@ -30,6 +32,30 @@ export default {
           '100%': { 
             opacity: '1', 
             transform: 'translateY(0) scale(1)' 
+          }
+        },
+        dropdownIn: {
+          '0%': { 
+            opacity: '0', 
+            transform: 'scale(0.9) translateY(-8px)', 
+            'transform-origin': 'top'
+          },
+          '100%': { 
+            opacity: '1', 
+            transform: 'scale(1) translateY(0)', 
+            'transform-origin': 'top'
+          }
+        },
+        dropdownOut: {
+          '0%': { 
+            opacity: '1', 
+            transform: 'scale(1) translateY(0)', 
+            'transform-origin': 'top'
+          },
+          '100%': { 
+            opacity: '0', 
+            transform: 'scale(0.9) translateY(-8px)', 
+            'transform-origin': 'top'
           }
         }
       }
