@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, User, BookOpen, Clock, Wallet } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import RegionSelector from './RegionSelector';
+import Navbar from './Navbar';
+import { useRouter } from './Router';
 
 const SidebarApp: React.FC = () => {
+  const { navigateTo, setSearchParams } = useRouter();
   const [selectedProject, setSelectedProject] = useState('选择项目');
   const [selectedRegion, setSelectedRegion] = useState('全球');
   const [selectedVideoType, setSelectedVideoType] = useState('不限');
@@ -86,14 +89,22 @@ const SidebarApp: React.FC = () => {
   };
 
   const handleSearch = () => {
-    // 处理搜索逻辑
-    console.log('搜索参数:', {
+    // 收集搜索参数
+    const searchParams = {
       project: selectedProject,
       region: selectedRegion,
       videoType: selectedVideoType,
       followers: selectedFollowers,
       views: selectedViews
-    });
+    };
+    
+    // 保存搜索参数
+    setSearchParams(searchParams);
+    
+    // 跳转到结果页面
+    navigateTo('results');
+    
+    console.log('搜索参数:', searchParams);
   };
 
   const DropdownButton = ({ 
@@ -330,44 +341,7 @@ const SidebarApp: React.FC = () => {
       </div>
 
       {/* 右侧导航栏 */}
-      <div className="fixed right-0 top-0 bottom-0 w-12 bg-[#F7EDE2] border-l border-stone-300 flex flex-col items-center justify-end py-2">
-        <div className="flex flex-col items-center space-y-5">
-          {/* 历史任务 */}
-          <button 
-            className="flex flex-col items-center gap-1 p-2 hover:bg-orange-200 rounded-lg transition-colors group"
-            title="历史任务"
-          >
-            <Clock className="w-5 h-5 text-gray-600 group-hover:text-gray-800" />
-            <span className="text-xs font-semibold text-gray-600 group-hover:text-gray-800">历史任务</span>
-          </button>
-
-          {/* 教程 */}
-          <button 
-            className="flex flex-col items-center gap-1 p-2 hover:bg-orange-200 rounded-lg transition-colors group"
-            title="教程"
-          >
-            <BookOpen className="w-5 h-5 text-gray-600 group-hover:text-gray-800" />
-            <span className="text-xs font-semibold text-gray-600 group-hover:text-gray-800">教程</span>
-          </button>
-
-          {/* 余额 */}
-          <button 
-            className="flex flex-col items-center gap-1 p-2 hover:bg-orange-200 rounded-lg transition-colors group"
-            title="余额"
-          >
-            <Wallet className="w-5 h-5 text-gray-600 group-hover:text-gray-800" />
-            <span className="text-xs font-semibold text-gray-600 group-hover:text-gray-800">余额</span>
-          </button>
-
-          {/* 用户头像 */}
-          <button 
-            className="w-10 h-10 bg-white rounded-full border-2 border-orange-300 flex items-center justify-center hover:border-orange-400 transition-colors"
-            title="用户中心"
-          >
-            <User className="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
-      </div>
+      <Navbar />
     </div>
   );
 };
